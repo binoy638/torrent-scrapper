@@ -16,7 +16,7 @@ def search1337x(search_key):
             "added": convertDateToTimestamp(convertStrToDate(tr.select("td.coll-date")[0].text)),
             "uploader": tr.select("td.coll-5 > a")[0].text,
             "link": f"http://1337x.to{a['href']}",
-            "provider": "1337"
+            "provider": "1337x"
         })
     return torrents
 

@@ -20,7 +20,7 @@ def searchTPB(search_key):
             "added": int(t["added"]),
             "uploader": t["username"],
             "link": f"http://apibay.org/t.php?id={t['id']}",
-            "provider": "piratebay"
+            "provider": "tpb"
         })
     return torrents
 
