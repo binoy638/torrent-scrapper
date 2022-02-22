@@ -84,24 +84,45 @@ def searchTPBRoute(q: Optional[str] = None, cache: Optional[bool] = True):
 
 
 @app.get("/get/1337x")
-def get1337xRoute(link: Optional[str] = None):
+def get1337xRoute(link: Optional[str] = None, cache: Optional[bool] = True):
     if not link:
         raise HTTPException(status_code=400, detail="link is required")
-    result = get1337xTorrentData(link)
+    if cache == False:
+        result = get1337xTorrentData(link)
+        return {"data": result}
+    key = f"1337x:{link}"
+    result = cache_get(key)
+    if not result:
+        result = get1337xTorrentData(link)
+        cache_set(key, result)
     return {"data": result}
 
 
 @app.get("/get/rarbg")
-def getRarbgRoute(link: Optional[str] = None):
+def getRarbgRoute(link: Optional[str] = None, cache: Optional[bool] = True):
     if not link:
         raise HTTPException(status_code=400, detail="link is required")
-    result = getRarbgTorrentData(link)
+    if cache == False:
+        result = getRarbgTorrentData(link)
+        return {"data": result}
+    key = f"Rarbg:{link}"
+    result = cache_get(key)
+    if not result:
+        result = getRarbgTorrentData(link)
+        cache_set(key, result)
     return {"data": result}
 
 
 @app.get("/get/tpb")
-def getTPBRoute(link: Optional[str] = None):
+def getTPBRoute(link: Optional[str] = None, cache: Optional[bool] = True):
     if not link:
         raise HTTPException(status_code=400, detail="link is required")
-    result = getTPBTorrentData(link)
+    if cache == False:
+        result = getTPBTorrentData(link)
+        return {"data": result}
+    key = f"TPB:{link}"
+    result = cache_get(key)
+    if not result:
+        result = getTPBTorrentData(link)
+        cache_set(key, result)
     return {"data": result}
