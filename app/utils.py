@@ -14,8 +14,11 @@ headers = {
 }
 
 
-def cache_set(key, value):
+def cache_set(key, value, timeout=None):
+
     redisClient.json().set(key, Path.rootPath(), value)
+    if timeout:
+        redisClient.expire(key, timeout)
 
 
 def cache_get(key):
