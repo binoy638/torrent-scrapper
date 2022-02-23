@@ -4,7 +4,7 @@ from ..utils import scrapper, toInt, convertStrToDate, convertDateToTimestamp
 
 def search1337x(search_key):
     torrents = []
-    source = scrapper.get(f"https://1337x.to/search/{search_key}/1/").text
+    source = scrapper.get(f"https://1337xx.to/search/{search_key}/1/").text
     soup = BeautifulSoup(source, "lxml")
     for tr in soup.select("tbody > tr"):
         a = tr.select("td.coll-1 > a")[1]
@@ -23,7 +23,7 @@ def search1337x(search_key):
             "size": str(tr.select("td.coll-4")[0].text).split('B', 1)[0] + "B",
             "added": date,
             "uploader": tr.select("td.coll-5 > a")[0].text,
-            "link": f"http://1337x.to{a['href']}",
+            "link": f"http://1337xx.to{a['href']}",
             "provider": "1337x"
         })
     return torrents
