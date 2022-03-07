@@ -9,7 +9,7 @@ services:
     restart: on-failure:5 
     ports:
       - "8000:8000"
-    command: uvicorn app.main:app --proxy-headers --host 0.0.0.0 --port 8000 
+    command: uvicorn app.main:app --proxy-headers --host 0.0.0.0 --port 8000 --workers 2 --http h11 --access-log
   redis:
     image: redislabs/rejson:latest
     logging:
