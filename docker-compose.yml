@@ -7,6 +7,8 @@ services:
       dockerfile: Dockerfile
     container_name: scrapper
     restart: on-failure:5 
+    networks:
+      - nginx-network
     ports:
       - "8000:8000"
     command: uvicorn app.main:app --proxy-headers --host 0.0.0.0 --port 8000 --workers 2 --http h11 --access-log
@@ -15,12 +17,14 @@ services:
     logging:
       driver: "none"
     container_name: redis-json
+    networks:
+      - nginx-network
     healthcheck:
       test: ["CMD", "redis-cli","ping"]
     ports:
       - "6380:6379"
 
 networks:
-  default:
-    external:
-      name: nginx-network
+  nginx-network:
+    external: true
+      
