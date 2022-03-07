@@ -19,3 +19,8 @@ services:
       test: ["CMD", "redis-cli","ping"]
     ports:
       - "6380:6379"
+
+networks:
+  default:
+    external:
+      name: nginx-network
