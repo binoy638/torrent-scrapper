@@ -41,7 +41,7 @@ def search1337xRoute(q: Optional[str] = None, filtertype: Optional[str] = Query(
 
 
 @app.get("/search/nyaa")
-def searchNyaaRoute(q: Optional[str] = None, filtertype: Optional[str] = Query(None, regex="^id$|^size$|^seeders$|^leechers$"), filtermode: Optional[str] = Query(None, regex="^asc$|^desc$"), cache: Optional[bool] = True):
+def searchNyaaRoute(q: Optional[str] = None, filtertype: Optional[str] = Query(None, regex="^time$|^size$|^seeders$|^leechers$"), filtermode: Optional[str] = Query(None, regex="^asc$|^desc$"), cache: Optional[bool] = True):
     if not q:
         raise HTTPException(status_code=400, detail="No search query")
     if cache == False:
@@ -56,7 +56,7 @@ def searchNyaaRoute(q: Optional[str] = None, filtertype: Optional[str] = Query(N
 
 
 @app.get("/search/rarbg")
-def searchRarbgRoute(q: Optional[str] = None, filtertype: Optional[str] = Query(None, regex="^data$|^size$|^seeders$|^leechers$"), filtermode: Optional[str] = Query(None, regex="^asc$|^desc$"), cache: Optional[bool] = True):
+def searchRarbgRoute(q: Optional[str] = None, filtertype: Optional[str] = Query(None, regex="^time$|^size$|^seeders$|^leechers$"), filtermode: Optional[str] = Query(None, regex="^asc$|^desc$"), cache: Optional[bool] = True):
     if not q:
         raise HTTPException(status_code=400, detail="No search query")
     if cache == False:
