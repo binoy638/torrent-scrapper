@@ -2,9 +2,16 @@ from bs4 import BeautifulSoup
 from ..utils import scrapper, toInt, convertStrToDate, convertDateToTimestamp
 
 
-def search1337x(search_key):
+def search1337x(search_key, filter_criteria=None, filter_mode=None):
+    baseUrl = f"https://1337xx.to"
+    if filter_criteria is not None and filter_mode is not None:
+        baseUrl = baseUrl + \
+            f"/sort-search/{search_key}/{filter_criteria}/{filter_mode}/1/"
+    else:
+        baseUrl = baseUrl + f"/search/{search_key}/1/"
+    print(baseUrl)
     torrents = []
-    source = scrapper.get(f"https://1337xx.to/search/{search_key}/1/").text
+    source = scrapper.get(baseUrl).text
     soup = BeautifulSoup(source, "lxml")
     for tr in soup.select("tbody > tr"):
         a = tr.select("td.coll-1 > a")[1]

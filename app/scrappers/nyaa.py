@@ -5,10 +5,12 @@ import requests
 from ..utils import convertDateToTimestamp
 
 
-def searchNyaa(query):
-    url = f"https://nyaa.si/?f=0&c=0_0&q={query}&s=seeders&o=desc"
+def searchNyaa(search_key, filter_criteria=None, filter_mode=None):
+    baseUrl = f"https://nyaa.si/?f=0&c=0_0&q={search_key}"
+    if filter_criteria is not None and filter_mode is not None:
+        baseUrl = baseUrl + f"&s={filter_criteria}&o={filter_mode}"
     try:
-        results = requests.get(url, timeout=3)
+        results = requests.get(baseUrl, timeout=3)
     except Timeout as excep:
         print("Could not connect to the site...", excep)
         return None

@@ -1,9 +1,11 @@
 from unittest import result
+
+from pyparsing import Regex
 from .scrappers.pirateBay import searchTPB, getTPBTorrentData
 from .scrappers.i1337x import search1337x, get1337xTorrentData
 from .scrappers.nyaa import searchNyaa
 from .scrappers.rarbg import searchRarbg, getRarbgTorrentData
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from .utils import cache_get, cache_set
 from typing import Optional
@@ -24,28 +26,28 @@ def read_root():
 
 
 @app.get("/search/1337x")
-def search1337xRoute(q: Optional[str] = None, cache: Optional[bool] = True):
+def search1337xRoute(q: Optional[str] = None, filtertype: Optional[str] = Query(None, regex="^time$|^size$|^seeders$|^leechers$"), filtermode: Optional[str] = Query(None, regex="^asc$|^desc$"), cache: Optional[bool] = True):
     if not q:
         raise HTTPException(status_code=400, detail="No search query")
     if cache == False:
-        result = search1337x(q)
+        result = search1337x(q, filtertype, filtermode)
         return {"results": result}
-    key = f"1337x:{q}"
+    key = f"1337x:{q}:{filtertype if filtertype else ''}:{filtermode if filtermode else ''}"
     result = cache_get(key)
     if not result:
-        result = search1337x(q)
+        result = search1337x(q, filtertype, filtermode)
         cache_set(key, result, 3600)
     return {"results": result}
 
 
 @app.get("/search/nyaa")
-def searchNyaaRoute(q: Optional[str] = None, cache: Optional[bool] = True):
+def searchNyaaRoute(q: Optional[str] = None, filtertype: Optional[str] = Query(None, regex="^id$|^size$|^seeders$|^leechers$"), filtermode: Optional[str] = Query(None, regex="^asc$|^desc$"), cache: Optional[bool] = True):
     if not q:
         raise HTTPException(status_code=400, detail="No search query")
     if cache == False:
         result = searchNyaa(q)
         return {"results": result}
-    key = f"Nyaa:{q}"
+    key = f"Nyaa:{q}:{filtertype if filtertype else ''}:{filtermode if filtermode else ''}"
     result = cache_get(key)
     if not result:
         result = searchNyaa(q)
@@ -54,13 +56,13 @@ def searchNyaaRoute(q: Optional[str] = None, cache: Optional[bool] = True):
 
 
 @app.get("/search/rarbg")
-def searchRarbgRoute(q: Optional[str] = None, cache: Optional[bool] = True):
+def searchRarbgRoute(q: Optional[str] = None, filtertype: Optional[str] = Query(None, regex="^data$|^size$|^seeders$|^leechers$"), filtermode: Optional[str] = Query(None, regex="^asc$|^desc$"), cache: Optional[bool] = True):
     if not q:
         raise HTTPException(status_code=400, detail="No search query")
     if cache == False:
         result = searchRarbg(q)
         return {"results": result}
-    key = f"Rarbg:{q}"
+    key = f"Rarbg:{q}:{filtertype if filtertype else ''}:{filtermode if filtermode else ''}"
     result = cache_get(key)
     if not result:
         result = searchRarbg(q)
