@@ -45,12 +45,12 @@ def searchNyaaRoute(q: Optional[str] = None, filtertype: Optional[str] = Query(N
     if not q:
         raise HTTPException(status_code=400, detail="No search query")
     if cache == False:
-        result = searchNyaa(q)
+        result = searchNyaa(q, filtertype, filtermode)
         return {"results": result}
     key = f"Nyaa:{q}:{filtertype if filtertype else ''}:{filtermode if filtermode else ''}"
     result = cache_get(key)
     if not result:
-        result = searchNyaa(q)
+        result = searchNyaa(q, filtertype, filtermode)
         cache_set(key, result, 3600)
     return {"results": result}
 
@@ -60,27 +60,27 @@ def searchRarbgRoute(q: Optional[str] = None, filtertype: Optional[str] = Query(
     if not q:
         raise HTTPException(status_code=400, detail="No search query")
     if cache == False:
-        result = searchRarbg(q)
+        result = searchRarbg(q, filtertype, filtermode)
         return {"results": result}
     key = f"Rarbg:{q}:{filtertype if filtertype else ''}:{filtermode if filtermode else ''}"
     result = cache_get(key)
     if not result:
-        result = searchRarbg(q)
+        result = searchRarbg(q, filtertype, filtermode)
         cache_set(key, result, 3600)
     return {"results": result}
 
 
 @app.get("/search/tpb")
-def searchTPBRoute(q: Optional[str] = None, cache: Optional[bool] = True):
+def searchTPBRoute(q: Optional[str] = None, filtertype: Optional[str] = Query(None, regex="^time$|^size$|^seeders$|^leechers$"), filtermode: Optional[str] = Query(None, regex="^asc$|^desc$"), cache: Optional[bool] = True):
     if not q:
         raise HTTPException(status_code=400, detail="No search query")
     if cache == False:
-        result = searchTPB(q)
+        result = searchTPB(q, filtertype, filtermode)
         return {"results": result}
-    key = f"TPB:{q}"
+    key = f"TPB:{q}:{filtertype if filtertype else ''}:{filtermode if filtermode else ''}"
     result = cache_get(key)
     if not result:
-        result = searchTPB(q)
+        result = searchTPB(q, filtertype, filtermode)
         cache_set(key, result, 3600)
     return {"results": result}
 

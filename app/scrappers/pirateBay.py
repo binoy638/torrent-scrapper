@@ -4,10 +4,21 @@ import requests
 from ..utils import get, toInt, convertBytes, getTPBTrackers
 
 
-def searchTPB(search_key):
+def getFilterCriteria(key):
+    if key == "seeders":
+        return "seeds"
+    elif key == "leechers":
+        return "leeches"
+    elif key == "size":
+        return "size"
+    elif key == "time":
+        return "added"
+
+
+def searchTPB(search_key, filter_criteria=None, filter_mode=None):
     torrents = []
     resp_json = get(
-        f"http://apibay.org/q.php?q={search_key}&cat=100,200,300,400,600").json()
+        f"http://apibay.org/q.php?q={search_key}&cat=").json()
     if(resp_json[0]["name"] == "No results returned"):
         return torrents
 
@@ -22,6 +33,9 @@ def searchTPB(search_key):
             "link": f"http://apibay.org/t.php?id={t['id']}",
             "provider": "tpb"
         })
+    if filter_criteria is not None and filter_mode is not None:
+        torrents = sorted(
+            torrents, key=lambda k: k[getFilterCriteria(filter_criteria)], reverse=filter_mode == "desc")
     return torrents
 
 
