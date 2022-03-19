@@ -10,8 +10,7 @@ def searchNyaa(search_key, filter_criteria=None, filter_mode=None):
     if filter_criteria is not None and filter_mode is not None:
         if filter_mode == "time":
             filter_mode = "id"
-        baseUrl = baseUrl + f"&id={filter_criteria}&o={filter_mode}"
-    print(baseUrl)
+        baseUrl = baseUrl + f"&s={filter_criteria}&o={filter_mode}"
     try:
         results = requests.get(baseUrl, timeout=3)
     except Timeout as excep:
