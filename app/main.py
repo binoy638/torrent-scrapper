@@ -1,10 +1,10 @@
 from unittest import result
 
 from pyparsing import Regex
-from scrappers.pirateBay import searchTPB, getTPBTorrentData
-from scrappers.i1337x import search1337x, get1337xTorrentData
-from scrappers.nyaa import searchNyaa
-from scrappers.rarbg import searchRarbg, getRarbgTorrentData
+from .scrappers.pirateBay import searchTPB, getTPBTorrentData
+from .scrappers.i1337x import search1337x, get1337xTorrentData
+from .scrappers.nyaa import searchNyaa
+from .scrappers.rarbg import searchRarbg, getRarbgTorrentData
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum

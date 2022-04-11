@@ -32,7 +32,7 @@ functions:
         - ".virtualenv/**"
         - "node_modules/**"
 
-    handler: main.handler
+    handler: app.main.handler
     environment:
       STAGE: ${self:provider.stage}
     layers:
