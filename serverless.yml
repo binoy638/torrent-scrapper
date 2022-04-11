@@ -1,0 +1,43 @@
+service: torrent-scrapper
+
+package:
+  individually: true
+
+provider:
+  name: aws
+  runtime: python3.8
+  region: ap-southeast-1
+  stage: ${opt:stage, "dev"}
+
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    dockerizePip: true
+    layer:
+      name: torrent-scrapper-layer
+      description: Torrent scrapper layer
+      compatibleRuntimes:
+        - python3.8
+
+functions:
+  app:
+    package:
+      exclude:
+        - "requirements.txt"
+        - "package.json"
+        - "package-lock.json"
+        - ".serverless/**"
+        - ".virtualenv/**"
+        - "node_modules/**"
+
+    handler: main.handler
+    environment:
+      STAGE: ${self:provider.stage}
+    layers:
+      - { Ref: PythonRequirementsLambdaLayer }
+    events:
+      - http:
+          method: any
+          path: /{proxy+}

@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 from datetime import datetime
 import requests
-from ..utils import get, toInt, convertBytes, getTPBTrackers
+from .utils import get, toInt, convertBytes, getTPBTrackers
 
 
 def getFilterCriteria(key):

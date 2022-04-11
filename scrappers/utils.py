@@ -1,10 +1,7 @@
 import requests
-import redis
 from datetime import datetime
 import cloudscraper
-from redis.commands.json.path import Path
 
-redisClient = redis.Redis(host='redis-json', port=6379, db=0)
 
 scrapper = cloudscraper.create_scraper()
 
@@ -12,17 +9,6 @@ headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36 Edg/83.0.478.45",
     "Accept-Encoding": "*"
 }
-
-
-def cache_set(key, value, timeout=None):
-
-    redisClient.json().set(key, Path.rootPath(), value)
-    if timeout:
-        redisClient.expire(key, timeout)
-
-
-def cache_get(key):
-    return redisClient.json().get(key)
 
 
 def toInt(value):

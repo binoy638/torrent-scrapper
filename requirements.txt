@@ -1,0 +1,29 @@
+anyio==3.5.0
+asgiref==3.5.0
+beautifulsoup4==4.11.1
+certifi==2021.10.8
+charset-normalizer==2.0.12; python_version >= '3'
+click==8.1.2
+cloudscraper==1.2.60
+fastapi==0.75.1
+flask==2.1.1
+h11==0.13.0
+idna==3.3
+importlib-metadata==4.11.3; python_version < '3.10'
+itsdangerous==2.1.2
+jinja2==3.1.1
+lxml==4.8.0
+mangum==0.14.1
+markupsafe==2.1.1
+pydantic==1.9.0
+pyparsing==3.0.8
+requests-toolbelt==0.9.1
+requests==2.27.1
+sniffio==1.2.0
+soupsieve==2.3.2
+starlette==0.17.1
+typing-extensions==4.1.1
+urllib3==1.26.9
+uvicorn==0.17.6
+werkzeug==2.1.1
+zipp==3.8.0

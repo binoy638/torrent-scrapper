@@ -7,11 +7,11 @@ name = "pypi"
 Flask = "*"
 fastapi = "*"
 uvicorn = "*"
-redis = "*"
 beautifulsoup4 = "*"
 requests = "*"
 cloudscraper = "*"
 lxml = "*"
+mangum = "*"
 
 [dev-packages]
 

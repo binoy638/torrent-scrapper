@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-from ..utils import scrapper, toInt, convertStrToDate, convertDateToTimestamp
+from .utils import scrapper, toInt, convertStrToDate, convertDateToTimestamp
 
 
 def search1337x(search_key, filter_criteria=None, filter_mode=None):

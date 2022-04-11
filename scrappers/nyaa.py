@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 from requests.exceptions import Timeout
 import requests
-from ..utils import convertDateToTimestamp
+from .utils import convertDateToTimestamp
 
 
 def searchNyaa(search_key, filter_criteria=None, filter_mode=None):

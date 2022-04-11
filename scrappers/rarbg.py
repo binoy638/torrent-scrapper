@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-from ..utils import get, toInt, convertDateToTimestamp
+from .utils import get, toInt, convertDateToTimestamp
 
 
 def searchRarbg(search_key, filter_criteria=None, filter_mode=None):
