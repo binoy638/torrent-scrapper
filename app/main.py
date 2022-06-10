@@ -1,15 +1,12 @@
-from unittest import result
-
-from pyparsing import Regex
 from .scrappers.pirateBay import searchTPB, getTPBTorrentData
 from .scrappers.i1337x import search1337x, get1337xTorrentData
 from .scrappers.nyaa import searchNyaa
 from .scrappers.rarbg import searchRarbg, getRarbgTorrentData
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 from typing import Optional
-
+from fastapi.responses import JSONResponse
 
 app = FastAPI()
 
@@ -20,79 +17,52 @@ app.add_middleware(
 )
 
 
-# @app.middleware("http")
-# async def check_query_param(request: Request, call_next):
-#     print("inside middleware")
-#     response = await call_next(request)
-#     return response
+@app.middleware("http")
+async def errors_handling(request: Request, call_next):
+    try:
+        return await call_next(request)
+    except Exception as exc:
+        return JSONResponse(status_code=500, content={'reason': str(exc)})
 
 
 @app.get("/")
 def read_root():
-    return {"status": "ok"}
+    return {"message": "ok"}
 
 
 @app.get("/search/1337x")
 def search1337xRoute(q: str, filtertype: Optional[str] = Query(None, regex="^time$|^size$|^seeders$|^leechers$"), filtermode: Optional[str] = Query(None, regex="^asc$|^desc$"), page: Optional[int] = Query(1, gt=0)):
-    try:
-        result = search1337x(q, filtertype, filtermode, page)
-        return {"results": result}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return {"results": search1337x(q, filtertype, filtermode, page)}
 
 
 @app.get("/search/nyaa")
 def searchNyaaRoute(q: str, filtertype: Optional[str] = Query(None, regex="^time$|^size$|^seeders$|^leechers$"), filtermode: Optional[str] = Query(None, regex="^asc$|^desc$"), page: Optional[int] = Query(1, gt=0)):
-    try:
-        result = searchNyaa(q, filtertype, filtermode, page)
-        return {"results": result}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return {"results": searchNyaa(q, filtertype, filtermode, page)}
 
 
 @app.get("/search/rarbg")
 def searchRarbgRoute(q: str, filtertype: Optional[str] = Query(None, regex="^time$|^size$|^seeders$|^leechers$"), filtermode: Optional[str] = Query(None, regex="^asc$|^desc$"), page: Optional[int] = Query(1, gt=0)):
-    try:
-        result = searchRarbg(q, filtertype, filtermode, page)
-        return {"results": result}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return {"results": searchRarbg(q, filtertype, filtermode, page)}
 
 
 @app.get("/search/tpb")
 def searchTPBRoute(q: str, filtertype: Optional[str] = Query(None, regex="^time$|^size$|^seeders$|^leechers$"), filtermode: Optional[str] = Query(None, regex="^asc$|^desc$")):
-    try:
-        result = searchTPB(q, filtertype, filtermode)
-        return {"results": result}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return {"results": searchTPB(q, filtertype, filtermode)}
 
 
 @app.get("/get/1337x")
 def get1337xRoute(link: str):
-    try:
-        result = get1337xTorrentData(link)
-        return {"data": result}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return {"data": get1337xTorrentData(link)}
 
 
 @app.get("/get/rarbg")
 def getRarbgRoute(link: str):
-    try:
-        result = getRarbgTorrentData(link)
-        return {"data": result}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return {"data": getRarbgTorrentData(link)}
 
 
 @app.get("/get/tpb")
 def getTPBRoute(link: str):
-    try:
-        result = getTPBTorrentData(link)
-        return {"data": result}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return {"data": getTPBTorrentData(link)}
 
 
 handler = Mangum(app)
