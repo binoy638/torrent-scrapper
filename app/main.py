@@ -33,27 +33,27 @@ def read_root():
 
 
 @app.get("/search/1337x")
-def search1337xRoute(q: str, filtertype: Optional[str] = Query(None, regex="^time$|^size$|^seeders$|^leechers$"), filtermode: Optional[str] = Query(None, regex="^asc$|^desc$")):
+def search1337xRoute(q: str, filtertype: Optional[str] = Query(None, regex="^time$|^size$|^seeders$|^leechers$"), filtermode: Optional[str] = Query(None, regex="^asc$|^desc$"), page: Optional[int] = Query(1, gt=0)):
     try:
-        result = search1337x(q, filtertype, filtermode)
+        result = search1337x(q, filtertype, filtermode, page)
         return {"results": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/search/nyaa")
-def searchNyaaRoute(q: str, filtertype: Optional[str] = Query(None, regex="^time$|^size$|^seeders$|^leechers$"), filtermode: Optional[str] = Query(None, regex="^asc$|^desc$")):
+def searchNyaaRoute(q: str, filtertype: Optional[str] = Query(None, regex="^time$|^size$|^seeders$|^leechers$"), filtermode: Optional[str] = Query(None, regex="^asc$|^desc$"), page: Optional[int] = Query(1, gt=0)):
     try:
-        result = searchNyaa(q, filtertype, filtermode)
+        result = searchNyaa(q, filtertype, filtermode, page)
         return {"results": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/search/rarbg")
-def searchRarbgRoute(q: str, filtertype: Optional[str] = Query(None, regex="^time$|^size$|^seeders$|^leechers$"), filtermode: Optional[str] = Query(None, regex="^asc$|^desc$")):
+def searchRarbgRoute(q: str, filtertype: Optional[str] = Query(None, regex="^time$|^size$|^seeders$|^leechers$"), filtermode: Optional[str] = Query(None, regex="^asc$|^desc$"), page: Optional[int] = Query(1, gt=0)):
     try:
-        result = searchRarbg(q, filtertype, filtermode)
+        result = searchRarbg(q, filtertype, filtermode, page)
         return {"results": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

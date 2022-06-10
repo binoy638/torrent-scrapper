@@ -2,8 +2,8 @@ from bs4 import BeautifulSoup
 from .utils import get, toInt, convertDateToTimestamp, getSource
 
 
-def searchRarbg(search_key, filter_criteria=None, filter_mode=None):
-    baseUrl = f"https://rargb.to/search/?search={search_key}"
+def searchRarbg(search_key, filter_criteria=None, filter_mode=None, page=1):
+    baseUrl = f"https://rargb.to/search/{page}/?search={search_key}"
     if filter_criteria is not None and filter_mode is not None:
         if filter_criteria == "time":
             filter_criteria = "data"
