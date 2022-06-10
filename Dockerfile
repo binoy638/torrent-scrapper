@@ -2,12 +2,8 @@ FROM python:3.9
 
 WORKDIR /home
 
-RUN pip install pipenv
+COPY requirements.txt /home
 
-COPY Pipfile /home
-
-COPY Pipfile.lock /home
-
-RUN pipenv install --system --deploy
+RUN pip install -r requirements.txt
 
 COPY . /home

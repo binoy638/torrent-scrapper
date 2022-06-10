@@ -8,8 +8,8 @@ from .utils import convertDateToTimestamp
 def searchNyaa(search_key, filter_criteria=None, filter_mode=None):
     baseUrl = f"https://nyaa.si/?f=0&c=0_0&q={search_key}"
     if filter_criteria is not None and filter_mode is not None:
-        if filter_mode == "time":
-            filter_mode = "id"
+        if filter_criteria == "time":
+            filter_criteria = "id"
         baseUrl = baseUrl + f"&s={filter_criteria}&o={filter_mode}"
     try:
         results = requests.get(baseUrl, timeout=3)
