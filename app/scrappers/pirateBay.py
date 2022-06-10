@@ -17,8 +17,12 @@ def getFilterCriteria(key):
 
 def searchTPB(search_key, filter_criteria=None, filter_mode=None):
     torrents = []
-    resp_json = get(
-        f"http://apibay.org/q.php?q={search_key}&cat=").json()
+    try:
+        resp_json = get(
+            f"http://apibay.org/q.php?q={search_key}&cat=").json()
+    except Exception as e:
+        raise Exception(e)
+
     if(resp_json[0]["name"] == "No results returned"):
         return torrents
 
@@ -43,7 +47,11 @@ def getTPBTorrentData(link):
     data = {}
     id = dict(x.split('=')
               for x in requests.utils.urlparse(link).query.split('&'))["id"]
-    resp_json = get(f"http://apibay.org/t.php?id={id}").json()
+    try:
+        resp_json = get(f"http://apibay.org/t.php?id={id}").json()
+    except Exception as e:
+        raise Exception(e)
+
     if(resp_json["name"] == "Torrent does not exsist."):
         data["magnet"] = ""
         data["files"] = []

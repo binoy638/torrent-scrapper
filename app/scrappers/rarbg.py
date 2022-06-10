@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-from .utils import get, toInt, convertDateToTimestamp
+from .utils import get, toInt, convertDateToTimestamp, getSource
 
 
 def searchRarbg(search_key, filter_criteria=None, filter_mode=None):
@@ -9,7 +9,10 @@ def searchRarbg(search_key, filter_criteria=None, filter_mode=None):
             filter_mode = "data"
         baseUrl = baseUrl + f"&order={filter_criteria}&by={filter_mode}"
     torrents = []
-    source = get(baseUrl).text
+    try:
+        source = getSource(baseUrl)
+    except Exception as e:
+        raise Exception(e)
     soup = BeautifulSoup(source, "lxml")
     for tr in soup.select("tr.lista2"):
         tds = tr.select("td")
@@ -28,12 +31,14 @@ def searchRarbg(search_key, filter_criteria=None, filter_mode=None):
 
 def getRarbgTorrentData(link):
     data = {}
-    source = get(link).text
+    try:
+        source = getSource(link)
+    except Exception as e:
+        raise Exception(e)
     soup = BeautifulSoup(source, "lxml")
 
     trs = soup.select("table.lista > tbody > tr")
-
-    data["magnet"] = trs[0].a.find_next('a')["href"]
+    data["magnet"] = trs[-1].find('a')["href"]
     files = []
     for li in trs[6].select("td.lista > div > ul > li"):
         files.append(li.text.strip())

@@ -11,6 +11,12 @@ headers = {
 }
 
 
+def getSource(url):
+    source = scrapper.get(url, headers=headers, timeout=5)
+    source.raise_for_status()
+    return source.text
+
+
 def toInt(value):
     return int(value.replace(',', ''))
 

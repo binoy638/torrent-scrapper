@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
-from .utils import scrapper, toInt, convertStrToDate, convertDateToTimestamp
+from .utils import scrapper, toInt, convertStrToDate, convertDateToTimestamp, getSource
+from requests.exceptions import Timeout
 
 
 def search1337x(search_key, filter_criteria=None, filter_mode=None):
@@ -9,9 +10,13 @@ def search1337x(search_key, filter_criteria=None, filter_mode=None):
             f"/sort-search/{search_key}/{filter_criteria}/{filter_mode}/1/"
     else:
         baseUrl = baseUrl + f"/search/{search_key}/1/"
-    print(baseUrl)
     torrents = []
-    source = scrapper.get(baseUrl).text
+
+    try:
+        source = getSource(baseUrl)
+    except Exception as e:
+        raise Exception(e)
+
     soup = BeautifulSoup(source, "lxml")
     for tr in soup.select("tbody > tr"):
         a = tr.select("td.coll-1 > a")[1]
@@ -38,7 +43,10 @@ def search1337x(search_key, filter_criteria=None, filter_mode=None):
 
 def get1337xTorrentData(link):
     data = {}
-    source = scrapper.get(link).text
+    try:
+        source = getSource(link)
+    except Exception as e:
+        raise Exception(e)
     soup = BeautifulSoup(source, "lxml")
     data["magnet"] = soup.select('ul.dropdown-menu > li')[-1].find('a')['href']
     data["torrent_file"] = soup.select(

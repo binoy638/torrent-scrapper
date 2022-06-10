@@ -13,9 +13,8 @@ def searchNyaa(search_key, filter_criteria=None, filter_mode=None):
         baseUrl = baseUrl + f"&s={filter_criteria}&o={filter_mode}"
     try:
         results = requests.get(baseUrl, timeout=3)
-    except Timeout as excep:
-        print("Could not connect to the site...", excep)
-        return None
+    except Exception as e:
+        raise Exception(e)
 
     soup = BeautifulSoup(results.text, "html.parser")
 
