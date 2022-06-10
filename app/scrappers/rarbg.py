@@ -5,8 +5,8 @@ from .utils import get, toInt, convertDateToTimestamp, getSource
 def searchRarbg(search_key, filter_criteria=None, filter_mode=None):
     baseUrl = f"https://rargb.to/search/?search={search_key}"
     if filter_criteria is not None and filter_mode is not None:
-        if filter_mode == "time":
-            filter_mode = "data"
+        if filter_criteria == "time":
+            filter_criteria = "data"
         baseUrl = baseUrl + f"&order={filter_criteria}&by={filter_mode}"
     torrents = []
     try:
