@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-from .utils import scrapper, toInt, convertStrToDate, convertDateToTimestamp, getSource
+from .utils import toInt, convertStrToDate, convertDateToTimestamp, getSource
 from requests.exceptions import Timeout
 
 
@@ -20,14 +20,10 @@ def search1337x(search_key, filter_criteria=None, filter_mode=None):
     soup = BeautifulSoup(source, "lxml")
     for tr in soup.select("tbody > tr"):
         a = tr.select("td.coll-1 > a")[1]
-        try:
-            # use regex to extract the date
-            date = convertDateToTimestamp(
-                convertStrToDate(tr.select("td.coll-date")[0].text))
-        except Exception as e:
-            print('exception while extracting date from 1337x')
-            print(e)
-            date = 1531699200
+
+        date = convertDateToTimestamp(
+            convertStrToDate(tr.select("td.coll-date")[0].text))
+
         torrents.append({
             "name": a.text,
             "seeds": toInt(tr.select("td.coll-2")[0].text),

@@ -1,5 +1,5 @@
 import requests
-from datetime import datetime
+from datetime import datetime, date
 import cloudscraper
 
 
@@ -53,11 +53,17 @@ def convertStrToDate(Str):
         "Nov": "11",
         "Dec": "12"
     }
-    month = monthNo[Str.split()[0][:-1]]
-    day = Str.split()[1][:-2]
-    year = "20"+Str.split()[2][1:]
-    date = f"{year}-{month}-{day} 00:00"
-    return date
+
+    try:
+        month = monthNo[Str.split()[0][:-1]]
+        day = Str.split()[1][:-2]
+        year = "20"+Str.split()[2][1:]
+        torrentDate = f"{year}-{month}-{day} 00:00"
+    except Exception as e:
+        print(e)
+        torrentDate = date.today().strftime("%Y-%m-%d %H:%M")
+    finally:
+        return torrentDate
 
 
 def getTPBTrackers():
