@@ -31,8 +31,8 @@ def read_root():
 
 
 @app.get("/search/1337x")
-def search1337xRoute(q: str, filtertype: Optional[str] = Query(None, regex="^time$|^size$|^seeders$|^leechers$"), filtermode: Optional[str] = Query(None, regex="^asc$|^desc$"), page: Optional[int] = Query(1, gt=0)):
-    return {"results": search1337x(q, filtertype, filtermode, page)}
+def search1337xRoute(q: str, filtertype: Optional[str] = Query(None, regex="^time$|^size$|^seeders$|^leechers$"), filtermode: Optional[str] = Query(None, regex="^asc$|^desc$"), page: Optional[int] = Query(1, gt=0), nsfw: Optional[bool] = Query(False)):
+    return {"results": search1337x(q, filtertype, filtermode, page, nsfw)}
 
 
 @app.get("/search/nyaa")
@@ -41,8 +41,8 @@ def searchNyaaRoute(q: str, filtertype: Optional[str] = Query(None, regex="^time
 
 
 @app.get("/search/rarbg")
-def searchRarbgRoute(q: str, filtertype: Optional[str] = Query(None, regex="^time$|^size$|^seeders$|^leechers$"), filtermode: Optional[str] = Query(None, regex="^asc$|^desc$"), page: Optional[int] = Query(1, gt=0)):
-    return {"results": searchRarbg(q, filtertype, filtermode, page)}
+def searchRarbgRoute(q: str, filtertype: Optional[str] = Query(None, regex="^time$|^size$|^seeders$|^leechers$"), filtermode: Optional[str] = Query(None, regex="^asc$|^desc$"), page: Optional[int] = Query(1, gt=0), nsfw: Optional[bool] = Query(False)):
+    return {"results": searchRarbg(q, filtertype, filtermode, page, nsfw)}
 
 
 @app.get("/search/tpb")

@@ -1,9 +1,11 @@
 from bs4 import BeautifulSoup
-from .utils import get, toInt, convertDateToTimestamp, getSource
+from .utils import toInt, convertDateToTimestamp, getSource
 
 
-def searchRarbg(search_key, filter_criteria=None, filter_mode=None, page=1):
-    baseUrl = f"https://rargb.to/search/{page}/?search={search_key}"
+def searchRarbg(search_key, filter_criteria=None, filter_mode=None, page=1, nsfw=False):
+    baseUrl = f"https://rargb.to/search/{page}/?search={search_key}&category[]=movies&category[]=tv&category[]=games&category[]=music&category[]=anime&category[]=apps&category[]=documentaries&category[]=other"
+    if nsfw:
+        baseUrl = f"https://rargb.to/search/{page}/?search={search_key}"
     if filter_criteria is not None and filter_mode is not None:
         if filter_criteria == "time":
             filter_criteria = "data"
@@ -16,6 +18,7 @@ def searchRarbg(search_key, filter_criteria=None, filter_mode=None, page=1):
     soup = BeautifulSoup(source, "lxml")
     for tr in soup.select("tr.lista2"):
         tds = tr.select("td")
+
         torrents.append({
             "name": tds[1].a.text,
             "seeds": toInt(tds[5].font.text),

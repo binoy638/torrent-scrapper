@@ -3,7 +3,7 @@ from .utils import toInt, convertStrToDate, convertDateToTimestamp, getSource
 from requests.exceptions import Timeout
 
 
-def search1337x(search_key, filter_criteria=None, filter_mode=None, page=1):
+def search1337x(search_key, filter_criteria=None, filter_mode=None, page=1, nsfw=False):
     baseUrl = f"https://1337xx.to"
     if filter_criteria is not None and filter_mode is not None:
         baseUrl = baseUrl + \
@@ -19,6 +19,9 @@ def search1337x(search_key, filter_criteria=None, filter_mode=None, page=1):
 
     soup = BeautifulSoup(source, "lxml")
     for tr in soup.select("tbody > tr"):
+        is_nsfw = tr.select("td.coll-1 > a")[0]["href"].split("/")[2] == "xxx"
+        if not nsfw and is_nsfw:
+            continue
         a = tr.select("td.coll-1 > a")[1]
 
         date = convertDateToTimestamp(
