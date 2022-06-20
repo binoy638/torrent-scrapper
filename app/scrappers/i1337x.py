@@ -21,8 +21,12 @@ def search1337x(search_key, filter_criteria=None, filter_mode=None, page=1, nsfw
 
     try:
 
-        totalPages = soup.select('div.pagination > ul > li')[-1].text
-        if not totalPages.isnumeric():
+        pageCounts = soup.select('div.pagination > ul > li')
+        if pageCounts[-1].text.isnumeric():
+            totalPages = pageCounts[-1].text
+        elif pageCounts[-2].text.isnumeric():
+            totalPages = pageCounts[-2].text
+        else:
             totalPages = 1
     except Exception as e:
         print(e)

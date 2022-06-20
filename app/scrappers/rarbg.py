@@ -11,6 +11,7 @@ def searchRarbg(search_key, filter_criteria=None, filter_mode=None, page=1, nsfw
             filter_criteria = "data"
         baseUrl = baseUrl + f"&order={filter_criteria}&by={filter_mode}"
     torrents = []
+
     try:
         source = getSource(baseUrl)
     except Exception as e:
@@ -18,11 +19,16 @@ def searchRarbg(search_key, filter_criteria=None, filter_mode=None, page=1, nsfw
     soup = BeautifulSoup(source, "lxml")
 
     try:
-        totalPages = soup.find(
-            "div", attrs={"id": "pager_links"}).find_all("a")[-1].text
-        if not totalPages.isnumeric():
+        pageCounts = soup.find(
+            "div", attrs={"id": "pager_links"}).find_all("a")
+        if pageCounts[-1].text.isnumeric():
+            totalPages = pageCounts[-1].text
+        elif pageCounts[-2].text.isnumeric():
+            totalPages = pageCounts[-2].text
+        else:
             totalPages = 1
     except Exception as e:
+        print(e)
         totalPages = 1
 
     for tr in soup.select("tr.lista2"):
