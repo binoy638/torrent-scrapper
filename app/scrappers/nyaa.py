@@ -23,6 +23,15 @@ def searchNyaa(search_key, filter_criteria=None, filter_mode=None, page=1):
     except AttributeError:
         return []
 
+    try:
+        totalPages = soup.find(
+            "ul", class_="pagination").find_all("li")[-2].text
+        if not totalPages.isnumeric():
+            totalPages = 1
+    except Exception as e:
+        print(e)
+        totalPages = 1
+
     animes = table.find_all("tr")
 
     if not animes:
@@ -48,4 +57,4 @@ def searchNyaa(search_key, filter_criteria=None, filter_mode=None, page=1):
             uploader = "unknown"
             anime_list.append({"name": title, "link": magnet, "size": size,
                                "seeds": seed, "leeches": leech, "added": added, "uploader": uploader})
-    return anime_list
+    return anime_list, totalPages

@@ -16,6 +16,15 @@ def searchRarbg(search_key, filter_criteria=None, filter_mode=None, page=1, nsfw
     except Exception as e:
         raise Exception(e)
     soup = BeautifulSoup(source, "lxml")
+
+    try:
+        totalPages = soup.find(
+            "div", attrs={"id": "pager_links"}).find_all("a")[-1].text
+        if not totalPages.isnumeric():
+            totalPages = 1
+    except Exception as e:
+        totalPages = 1
+
     for tr in soup.select("tr.lista2"):
         tds = tr.select("td")
 
@@ -29,7 +38,7 @@ def searchRarbg(search_key, filter_criteria=None, filter_mode=None, page=1, nsfw
             "link": f"http://rargb.to{tds[1].a['href']}",
             "provider": "rarbg"
         })
-    return torrents
+    return torrents, totalPages
 
 
 def getRarbgTorrentData(link):

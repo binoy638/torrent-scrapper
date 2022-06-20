@@ -18,6 +18,16 @@ def search1337x(search_key, filter_criteria=None, filter_mode=None, page=1, nsfw
         raise Exception(e)
 
     soup = BeautifulSoup(source, "lxml")
+
+    try:
+
+        totalPages = soup.select('div.pagination > ul > li')[-1].text
+        if not totalPages.isnumeric():
+            totalPages = 1
+    except Exception as e:
+        print(e)
+        totalPages = 1
+
     for tr in soup.select("tbody > tr"):
         is_nsfw = tr.select("td.coll-1 > a")[0]["href"].split("/")[2] == "xxx"
         if not nsfw and is_nsfw:
@@ -37,7 +47,7 @@ def search1337x(search_key, filter_criteria=None, filter_mode=None, page=1, nsfw
             "link": f"http://1337xx.to{a['href']}",
             "provider": "1337x"
         })
-    return torrents
+    return torrents, totalPages
 
 
 def get1337xTorrentData(link):
