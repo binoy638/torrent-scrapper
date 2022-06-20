@@ -20,9 +20,8 @@ def searchNyaa(search_key, filter_criteria=None, filter_mode=None, page=1):
 
     try:
         table = soup.find("table", class_="table").find("tbody")
-    except AttributeError:
-        return []
-
+    except AttributeError as e:
+        return [], 1
     try:
         totalPages = soup.find(
             "ul", class_="pagination").find_all("li")[-2].text
@@ -35,7 +34,7 @@ def searchNyaa(search_key, filter_criteria=None, filter_mode=None, page=1):
     animes = table.find_all("tr")
 
     if not animes:
-        return []
+        return [], 1
 
     anime_list = []
 

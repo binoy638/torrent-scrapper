@@ -1,4 +1,3 @@
-from .scrappers.pirateBay import searchTPB, getTPBTorrentData
 from .scrappers.i1337x import search1337x, get1337xTorrentData
 from .scrappers.nyaa import searchNyaa
 from .scrappers.rarbg import searchRarbg, getRarbgTorrentData
@@ -48,11 +47,6 @@ def searchRarbgRoute(q: str, filtertype: Optional[str] = Query(None, regex="^tim
     return {"torrents": torrents, "totalPages": totalPages}
 
 
-@app.get("/search/tpb")
-def searchTPBRoute(q: str, filtertype: Optional[str] = Query(None, regex="^time$|^size$|^seeders$|^leechers$"), filtermode: Optional[str] = Query(None, regex="^asc$|^desc$")):
-    return {"results": searchTPB(q, filtertype, filtermode)}
-
-
 @app.get("/get/1337x")
 def get1337xRoute(link: str):
     return {"data": get1337xTorrentData(link)}
@@ -61,11 +55,6 @@ def get1337xRoute(link: str):
 @app.get("/get/rarbg")
 def getRarbgRoute(link: str):
     return {"data": getRarbgTorrentData(link)}
-
-
-@app.get("/get/tpb")
-def getTPBRoute(link: str):
-    return {"data": getTPBTorrentData(link)}
 
 
 handler = Mangum(app)

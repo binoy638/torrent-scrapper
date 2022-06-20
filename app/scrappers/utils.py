@@ -64,23 +64,3 @@ def convertStrToDate(Str):
         torrentDate = date.today().strftime("%Y-%m-%d %H:%M")
     finally:
         return torrentDate
-
-
-def getTPBTrackers():
-    tr = "&tr=" + \
-        requests.utils.quote("udp://tracker.coppersurfer.tk:6969/announce")
-    tr += "&tr=" + requests.utils.quote("udp://9.rarbg.to:2920/announce")
-    tr += "&tr=" + requests.utils.quote("udp://tracker.opentrackr.org:1337")
-    tr += "&tr=" + \
-        requests.utils.quote(
-            "udp://tracker.internetwarriors.net:1337/announce")
-    tr += "&tr=" + \
-        requests.utils.quote(
-            "udp://tracker.leechers-paradise.org:6969/announce")
-    tr += "&tr=" + \
-        requests.utils.quote("udp://tracker.coppersurfer.tk:6969/announce")
-    tr += "&tr=" + \
-        requests.utils.quote("udp://tracker.pirateparty.gr:6969/announce")
-    tr += "&tr=" + \
-        requests.utils.quote("udp://tracker.cyberia.is:6969/announce")
-    return tr
