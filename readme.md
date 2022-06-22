@@ -1,9 +1,8 @@
 ## Running the app in the development mode
 
-Run the following command to launch the project in dev mode (You must have pipenv installed)
+Run the following command to launch the project in dev mode 
 
 ```bash
-  pipenv shell
   uvicorn app.main:app --proxy-headers --host 0.0.0.0 --port 8000 --http h11 --use-colors --log-level debug --access-log  --reload
 ```
 
