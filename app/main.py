@@ -1,3 +1,4 @@
+from .scrappers.tpb import getTPBTorrentData, searchTPB
 from .scrappers.i1337x import search1337x, get1337xTorrentData
 from .scrappers.nyaa import searchNyaa
 from .scrappers.rarbg import searchRarbg, getRarbgTorrentData
@@ -30,20 +31,26 @@ def read_root():
 
 
 @app.get("/search/1337x")
-def search1337xRoute(q: str, filtertype: Optional[str] = Query(None, regex="^time$|^size$|^seeders$|^leechers$"), filtermode: Optional[str] = Query(None, regex="^asc$|^desc$"), page: Optional[int] = Query(1, gt=0), nsfw: Optional[bool] = Query(False)):
-    torrents, totalPages = search1337x(q, filtertype, filtermode, page, nsfw)
+def search1337xRoute(q: str, sort_type: Optional[str] = Query(None, regex="^time$|^size$|^seeders$|^leechers$"), sort_mode: Optional[str] = Query(None, regex="^asc$|^desc$"), page: Optional[int] = Query(1, gt=0), nsfw: Optional[bool] = Query(False)):
+    torrents, totalPages = search1337x(q, sort_type, sort_mode, page, nsfw)
     return {"torrents": torrents, "totalPages": totalPages}
 
 
 @app.get("/search/nyaa")
-def searchNyaaRoute(q: str, filtertype: Optional[str] = Query(None, regex="^time$|^size$|^seeders$|^leechers$"), filtermode: Optional[str] = Query(None, regex="^asc$|^desc$"), page: Optional[int] = Query(1, gt=0)):
-    torrents, totalPages = searchNyaa(q, filtertype, filtermode, page)
+def searchNyaaRoute(q: str, sort_type: Optional[str] = Query(None, regex="^time$|^size$|^seeders$|^leechers$"), sort_mode: Optional[str] = Query(None, regex="^asc$|^desc$"), page: Optional[int] = Query(1, gt=0)):
+    torrents, totalPages = searchNyaa(q, sort_type, sort_mode, page)
     return {"torrents": torrents, "totalPages": totalPages}
 
 
 @app.get("/search/rarbg")
-def searchRarbgRoute(q: str, filtertype: Optional[str] = Query(None, regex="^time$|^size$|^seeders$|^leechers$"), filtermode: Optional[str] = Query(None, regex="^asc$|^desc$"), page: Optional[int] = Query(1, gt=0), nsfw: Optional[bool] = Query(False)):
-    torrents, totalPages = searchRarbg(q, filtertype, filtermode, page, nsfw)
+def searchRarbgRoute(q: str, sort_type: Optional[str] = Query(None, regex="^time$|^size$|^seeders$|^leechers$"), sort_mode: Optional[str] = Query(None, regex="^asc$|^desc$"), page: Optional[int] = Query(1, gt=0), nsfw: Optional[bool] = Query(False)):
+    torrents, totalPages = searchRarbg(q, sort_type, sort_mode, page, nsfw)
+    return {"torrents": torrents, "totalPages": totalPages}
+
+
+@app.get("/search/tpb")
+def searchTPBRoute(q: str, sort_type: Optional[str] = Query(None, regex="^time$|^size$|^seeders$|^leechers$"), sort_mode: Optional[str] = Query(None, regex="^asc$|^desc$"), page: Optional[int] = Query(1, gt=0), nsfw: Optional[bool] = Query(False)):
+    torrents, totalPages = searchTPB(q, sort_type, sort_mode, page, nsfw)
     return {"torrents": torrents, "totalPages": totalPages}
 
 
@@ -55,6 +62,11 @@ def get1337xRoute(link: str):
 @app.get("/get/rarbg")
 def getRarbgRoute(link: str):
     return {"data": getRarbgTorrentData(link)}
+
+
+@app.get("/get/tpb")
+def getTPBRoute(link: str):
+    return {"data": getTPBTorrentData(link)}
 
 
 handler = Mangum(app)
