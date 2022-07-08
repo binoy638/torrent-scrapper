@@ -83,4 +83,4 @@ def getTPBTrackers():
         requests.utils.quote("udp://tracker.pirateparty.gr:6969/announce")
     tr += "&tr=" + \
         requests.utils.quote("udp://tracker.cyberia.is:6969/announce")
-    return
+    return tr

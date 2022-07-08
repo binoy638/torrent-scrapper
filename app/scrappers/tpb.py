@@ -72,6 +72,7 @@ def getTPBTorrentData(link):
         data["magnet"] = ""
         data["files"] = []
         return data
+    print(getTPBTrackers())
     magnet = "magnet:?xt=urn:btih:" + \
         resp_json["info_hash"] + "&dn=" + \
         requests.utils.quote(resp_json["name"]) + getTPBTrackers()
