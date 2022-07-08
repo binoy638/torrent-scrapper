@@ -32,6 +32,7 @@ def read_root():
 
 @app.get("/search/1337x")
 def search1337xRoute(q: str, sort_type: Optional[str] = Query(None, regex="^time$|^size$|^seeders$|^leechers$"), sort_mode: Optional[str] = Query(None, regex="^asc$|^desc$"), page: Optional[int] = Query(1, gt=0), nsfw: Optional[bool] = Query(False)):
+    print(q, sort_type, sort_mode, page, nsfw)
     torrents, totalPages = search1337x(q, sort_type, sort_mode, page, nsfw)
     return {"torrents": torrents, "totalPages": totalPages}
 

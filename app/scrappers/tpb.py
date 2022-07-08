@@ -40,7 +40,7 @@ def searchTPB(search_key, sort_criteria=None, sort_mode=None, page=1, nsfw=False
     resp_json = get(baseUrl).json()
 
     if(resp_json[0]["name"] == "No results returned"):
-        return torrents
+        return torrents, 1
 
     for t in resp_json:
         torrents.append({
