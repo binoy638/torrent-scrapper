@@ -11,7 +11,6 @@ def search1337x(search_key, filter_criteria=None, filter_mode=None, page=1, nsfw
     else:
         baseUrl = baseUrl + f"/search/{search_key}/{page}/"
     torrents = []
-    print(baseUrl)
     try:
         source = getSource(baseUrl)
     except Exception as e:
