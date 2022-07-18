@@ -31,6 +31,13 @@ functions:
         - ".serverless/**"
         - ".virtualenv/**"
         - "node_modules/**"
+        - "__tests__/**"
+        - ".github/**"
+        - ".git/**"
+        - "docker-compose.yml"
+        - "docker-compose.dev.yml"
+        - "Dockerfile"
+        - "Dockerfile.dev"
 
     handler: app.main.handler
     environment:
