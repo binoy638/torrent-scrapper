@@ -1,3 +1,4 @@
+# Torrent Scrapper
 ## Running the app in the development mode
 
 Run the following command to launch the project in dev mode 
