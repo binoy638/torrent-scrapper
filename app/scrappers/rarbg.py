@@ -56,7 +56,7 @@ def getRarbgTorrentData(link):
     soup = BeautifulSoup(source, "lxml")
 
     trs = soup.select("table.lista > tbody > tr")
-    data["magnet"] = trs[-1].find('a')["href"]
+    data["magnet"] = trs[0].find('a')["href"]
     files = []
     for li in trs[6].select("td.lista > div > ul > li"):
         files.append(li.text.strip())
