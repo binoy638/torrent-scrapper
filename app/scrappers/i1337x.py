@@ -25,6 +25,8 @@ def search1337x(search_key, filter_criteria=None, filter_mode=None, page=1, nsfw
             totalPages = pageCounts[-1].text
         elif pageCounts[-2].text.isnumeric():
             totalPages = pageCounts[-2].text
+        elif pageCounts[-3].text.isnumeric():
+            totalPages = pageCounts[-3].text
         else:
             totalPages = 1
     except Exception as e:
