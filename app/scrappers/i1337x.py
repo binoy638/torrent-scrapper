@@ -4,7 +4,7 @@ from requests.exceptions import Timeout
 
 
 def search1337x(search_key, filter_criteria=None, filter_mode=None, page=1, nsfw=False):
-    baseUrl = f"https://1337x.to"
+    baseUrl = f"https://1337xx.to"
     if filter_criteria is not None and filter_mode is not None:
         baseUrl = baseUrl + \
             f"/sort-search/{search_key}/{filter_criteria}/{filter_mode}/{page}/"
