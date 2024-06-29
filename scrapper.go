@@ -103,11 +103,11 @@ func getMagnetLink(url string) (string, error) {
 	c.OnHTML("table.lista", func(e *colly.HTMLElement) {
 		// Find all tr elements inside the table
 		rows := e.DOM.Find("tr")
-		firstRow := rows.Eq(0)
-		firstRowCells := firstRow.Find("td")
+		magnetLinkRow := rows.Eq(0)
+		magnetLinkRowCells := magnetLinkRow.Find("td")
 
-		if firstRowCells.Length() > 0 {
-			secondCell := firstRowCells.Eq(1)
+		if magnetLinkRowCells.Length() > 0 {
+			secondCell := magnetLinkRowCells.Eq(1)
 			var exists bool
 			magnetUrl, exists = secondCell.Find("a").Attr("href")
 			if !exists {
@@ -116,6 +116,20 @@ func getMagnetLink(url string) (string, error) {
 		} else {
 			magnetErr = fmt.Errorf("no rows found in the table")
 		}
+
+		filesRow := rows.Eq(5)
+		filesRowCells := filesRow.Find("td")
+
+		if filesRowCells.Length() > 0 {
+			dataCell := filesRowCells.Eq(1)
+			files := dataCell.Find("li")
+
+			files.Each(func(i int, row *goquery.Selection) {
+				text := row.Text()
+				fmt.Println(text)
+			})
+		}
+
 		done <- true
 	})
 
