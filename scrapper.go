@@ -27,15 +27,8 @@ type Torrent struct {
 	Provider string `json:"provider"`
 }
 
-type TorrentAdditionalInfo struct {
-	Magnet string `json:"magnet"`
-}
-
 func parseSizeString(sizeStr string) (int64, error) {
-	// Convert sizeStr to lowercase for case insensitivity
 	sizeStr = strings.ToLower(sizeStr)
-
-	// Split sizeStr into number and unit
 	parts := strings.Fields(sizeStr)
 	if len(parts) != 2 {
 		return 0, fmt.Errorf("invalid size string format: %s", sizeStr)
@@ -51,11 +44,11 @@ func parseSizeString(sizeStr string) (int64, error) {
 
 	switch unit {
 	case "gb":
-		multiplier = 1024 * 1024 * 1024 // 1 GB = 1024 * 1024 * 1024 bytes
+		multiplier = 1024 * 1024 * 1024
 	case "mb":
-		multiplier = 1024 * 1024 // 1 MB = 1024 * 1024 bytes
+		multiplier = 1024 * 1024
 	case "kb":
-		multiplier = 1024 // 1 KB = 1024 bytes
+		multiplier = 1024
 	default:
 		return 0, fmt.Errorf("unsupported size unit: %s", unit)
 	}
@@ -76,33 +69,26 @@ func parseInt(intStr string) int {
 
 func formatDate(dateStr string) (int64, error) {
 	layout := "2006-01-02 15:04:05"
-
-	// Parse the date string into a time.Time object
 	dateTime, err := time.Parse(layout, dateStr)
 	if err != nil {
 		return 0, err
 	}
-
-	// Convert time.Time to Unix timestamp (seconds since January 1, 1970 UTC)
-	unixTimestamp := dateTime.Unix()
-
-	return unixTimestamp, nil
-}
-
-func trimWhiteSpace(str string) string {
-	return strings.TrimSpace(str)
+	return dateTime.Unix(), nil
 }
 
 func getMagnetLink(url string) (string, error) {
-	// Create a new collector for fetching the magnet link
 	c := colly.NewCollector()
 	var magnetUrl string
 	var magnetErr error
 	done := make(chan bool)
 
 	c.OnHTML("table.lista", func(e *colly.HTMLElement) {
-		// Find all tr elements inside the table
 		rows := e.DOM.Find("tr")
+		if rows.Length() == 0 {
+			magnetErr = fmt.Errorf("no rows found in the table")
+			done <- true
+			return
+		}
 		magnetLinkRow := rows.Eq(0)
 		magnetLinkRowCells := magnetLinkRow.Find("td")
 
@@ -112,29 +98,32 @@ func getMagnetLink(url string) (string, error) {
 			magnetUrl, exists = secondCell.Find("a").Attr("href")
 			if !exists {
 				magnetErr = fmt.Errorf("magnet link not found")
+
 			}
 		} else {
 			magnetErr = fmt.Errorf("no rows found in the table")
 		}
-
-		filesRow := rows.Eq(5)
-		filesRowCells := filesRow.Find("td")
-
-		if filesRowCells.Length() > 0 {
-			dataCell := filesRowCells.Eq(1)
-			files := dataCell.Find("li")
-
-			files.Each(func(i int, row *goquery.Selection) {
-				text := row.Text()
-				fmt.Println(text)
-			})
-		}
-
 		done <- true
 	})
 
-	maxRetries := 3 // Maximum number of retries
-	retryCount := 0 // Retry counter
+	handleCollectorError(c, done, &magnetErr)
+
+	go func() {
+		err := c.Visit(url)
+		if err != nil {
+			magnetErr = err
+		}
+		done <- true
+	}()
+
+	<-done
+
+	return magnetUrl, magnetErr
+}
+
+func handleCollectorError(c *colly.Collector, done chan bool, errPtr *error) {
+	maxRetries := 10
+	retryCount := 0
 
 	c.OnError(func(r *colly.Response, err error) {
 		fmt.Printf("Request URL: %s failed with response: %v\nError: %v\n", r.Request.URL, r, err)
@@ -146,136 +135,145 @@ func getMagnetLink(url string) (string, error) {
 				r.Request.Retry()
 			} else {
 				fmt.Println("Maximum retries exceeded")
-				magnetErr = err
+				*errPtr = err
 				done <- true
 			}
-		}
-
-	})
-
-	// Start scraping
-	go func() {
-		err := c.Visit(url)
-		if err != nil {
-			magnetErr = err
+		} else {
+			*errPtr = err
 			done <- true
 		}
-	}()
+	})
+}
 
-	// Wait for the scraping to complete
-	<-done
+func extractTorrentInfo(row *goquery.Selection, e *colly.HTMLElement, wg *sync.WaitGroup, mu *sync.Mutex, torrents *[]Torrent) {
+	defer wg.Done()
 
-	if magnetErr != nil {
-		return "", magnetErr
+	cells := row.Find("td")
+	if cells.Length() == 0 {
+		log.Println("No cells found in row")
+		return
 	}
 
-	return magnetUrl, nil
+	nameCell := cells.Eq(1)
+	name := nameCell.Find("a").Text()
+	href, exists := nameCell.Find("a").Attr("href")
+	var absoluteURL string
+	if exists {
+		absoluteURL = e.Request.AbsoluteURL(href)
+	} else {
+		absoluteURL = ""
+	}
+
+	added, err := formatDate(trimWhiteSpace(cells.Eq(3).Text()))
+	if err != nil {
+		added = 0
+	}
+
+	size, err := parseSizeString(trimWhiteSpace(cells.Eq(4).Text()))
+	if err != nil {
+		size = 0
+	}
+
+	magnetLink, err := getMagnetLink(absoluteURL)
+	if err != nil {
+		log.Printf("Failed to get magnet link: %v url: %s", err, absoluteURL)
+	}
+
+	torrent := Torrent{
+		Name:     trimWhiteSpace(name),
+		Added:    added,
+		Size:     size,
+		Seeds:    parseInt(cells.Eq(5).Text()),
+		Leeches:  parseInt(cells.Eq(6).Text()),
+		Uploader: trimWhiteSpace(cells.Eq(7).Text()),
+		Link:     magnetLink,
+		Provider: "Rarbg",
+	}
+
+	mu.Lock()
+	*torrents = append(*torrents, torrent)
+	mu.Unlock()
+
+	// fmt.Println("Added torrent:", torrent.Name)
+}
+
+const (
+	RARBG_URL  = "https://rargb.to"
+	I1337X_URL = "https://1337xx.to"
+	TPB_URL    = "https://apibay.org/q.php"
+	NYAA_URL   = "https://nyaa.si/?f=0&c=0_0"
+)
+
+func BuildCompleteUrl(site string, q string, sort_by string, sort_type string, page string, nsfw bool) string {
+	var url string
+	switch site {
+	case "rarbg":
+		url = RARBG_URL + "/search/" + page + "/?search=" + q + "&category[]=movies&category[]=tv&category[]=games&category[]=music&category[]=anime&category[]=apps&category[]=documentaries&category[]=other"
+
+		if nsfw {
+			url = RARBG_URL + "/search/" + page + "/?search=" + q
+		}
+
+		if sort_by != "" && sort_type != "" {
+			if sort_by == "time" {
+				sort_by = "data"
+			}
+			url = url + "&order=" + sort_by + "&by=" + sort_type
+		}
+	}
+	fmt.Println(url)
+	return url
 }
 
 func main() {
 	c := colly.NewCollector(colly.Debugger(&debug.LogDebugger{}))
+
+	startTime := time.Now()
 
 	var torrents []Torrent
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
 	c.OnHTML("table.lista2t", func(e *colly.HTMLElement) {
-		// Find all tr elements inside the table
 		rows := e.DOM.Find("tr")
-
-		// Iterate over each tr element, skipping the first one
 		rows.Slice(1, rows.Length()).Each(func(i int, row *goquery.Selection) {
-			// Find all td elements inside the current tr element
-			cells := row.Find("td")
-			if cells.Length() > 0 {
-				nameCell := cells.Eq(1)
-				name := nameCell.Text()
-				href, exists := nameCell.Find("a").Attr("href")
-				var absoluteURL string
-				if exists {
-					absoluteURL = e.Request.AbsoluteURL(href)
-				} else {
-					absoluteURL = ""
-				}
-
-				added, err := formatDate(trimWhiteSpace(cells.Eq(3).Text()))
-				if err != nil {
-					added = 0
-				}
-
-				size, err := parseSizeString(trimWhiteSpace(cells.Eq(4).Text()))
-				if err != nil {
-					size = 0
-				}
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					magnetLink, err := getMagnetLink(absoluteURL)
-					if err != nil {
-						log.Printf("Failed to get magnet link: %v url: %s", err, absoluteURL)
-						return
-					}
-					// Populate the Torrent struct with cell values
-					torrent := Torrent{
-						Name:     trimWhiteSpace(name),
-						Added:    added,
-						Size:     size,
-						Seeds:    parseInt(cells.Eq(5).Text()),
-						Leeches:  parseInt(cells.Eq(6).Text()),
-						Uploader: trimWhiteSpace(cells.Eq(7).Text()),
-						Link:     magnetLink,
-						Provider: "Rarbg",
-					}
-					mu.Lock()
-					torrents = append(torrents, torrent)
-					mu.Unlock()
-					fmt.Println("Added torrent:", torrent.Name)
-				}()
-			}
+			wg.Add(1)
+			go extractTorrentInfo(row, e, &wg, &mu, &torrents)
 		})
 	})
 
-	maxRetries := 3 // Maximum number of retries
-	retryCount := 0 // Retry counter
+	handleCollectorError(c, make(chan bool), new(error))
 
-	c.OnError(func(r *colly.Response, err error) {
-		fmt.Printf("Request URL: %s failed with response: %v\nError: %v\n", r.Request.URL, r, err)
-		if r.StatusCode == http.StatusInternalServerError || r.StatusCode == http.StatusBadGateway || r.StatusCode == 0 {
-			if retryCount < maxRetries {
-				retryCount++
-				time.Sleep(2 * time.Second)
-				fmt.Printf("Retrying (%d/%d)...\n", retryCount, maxRetries)
-				r.Request.Retry()
-			} else {
-				fmt.Println("Maximum retries exceeded")
-			}
-		}
-	})
-
-	c.OnRequest(func(r *colly.Request) {
-		fmt.Println("Visiting", r.URL.String())
-	})
-
-	err := c.Visit("https://rargb.to/search/1/?search=avengers")
+	err := c.Visit(BuildCompleteUrl("rarbg", "avengers", "", "", "1", false))
 	if err != nil {
 		log.Fatalf("Failed to start visit: %v", err)
 	}
 
 	wg.Wait()
 
-	// Dump the torrents array as JSON to a file
-	file, err := os.Create("torrents.json")
+	if err := writeTorrentsToFile("torrents.json", torrents); err != nil {
+		log.Fatalf("Failed to write torrents to file: %v", err)
+	}
+
+	fmt.Printf("Torrents data has been written to torrents.json in %v", time.Since(startTime))
+}
+
+func writeTorrentsToFile(filename string, torrents []Torrent) error {
+	file, err := os.Create(filename)
 	if err != nil {
-		log.Fatalf("Failed to create file: %v", err)
+		return fmt.Errorf("failed to create file: %v", err)
 	}
 	defer file.Close()
 
 	encoder := json.NewEncoder(file)
 	encoder.SetIndent("", "  ")
-	err = encoder.Encode(torrents)
-	if err != nil {
-		log.Fatalf("Failed to encode torrents to JSON: %v", err)
+	if err := encoder.Encode(torrents); err != nil {
+		return fmt.Errorf("failed to encode torrents to JSON: %v", err)
 	}
 
-	fmt.Println("Torrents data has been written to torrents.json")
+	return nil
+}
+
+func trimWhiteSpace(str string) string {
+	return strings.TrimSpace(str)
 }
