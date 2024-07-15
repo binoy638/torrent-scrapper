@@ -17,14 +17,20 @@ import (
 )
 
 type Torrent struct {
-	Name     string `json:"name"`
-	Seeds    int    `json:"seeds"`
-	Leeches  int    `json:"leeches"`
-	Size     int64  `json:"size"`
-	Added    int64  `json:"added"`
-	Uploader string `json:"uploader"`
-	Link     string `json:"link"`
-	Provider string `json:"provider"`
+	Name     string   `json:"name"`
+	Seeds    int      `json:"seeds"`
+	Leeches  int      `json:"leeches"`
+	Size     int64    `json:"size"`
+	Added    int64    `json:"added"`
+	Uploader string   `json:"uploader"`
+	Magnet   string   `json:"magnet"`
+	Files    []string `json:"files"`
+	Provider string   `json:"provider"`
+}
+
+type AdditionalTorrentInfo struct {
+	Magnet string   `json:"magnet"`
+	Files  []string `json:"files"`
 }
 
 func parseSizeString(sizeStr string) (int64, error) {
@@ -76,49 +82,95 @@ func formatDate(dateStr string) (int64, error) {
 	return dateTime.Unix(), nil
 }
 
-func getMagnetLink(url string) (string, error) {
-	c := colly.NewCollector()
-	var magnetUrl string
-	var magnetErr error
+func ExtractTorrentMagnetUrl(row *goquery.Selection) string {
+	magnetUrl := ""
+	cells := row.Find("td")
+
+	if cells.Length() > 0 {
+		url, exists := cells.Eq(1).Find("a").Attr("href")
+		if !exists {
+			fmt.Printf("magnet link not found in second cell")
+			return magnetUrl
+		}
+
+		if !strings.HasPrefix(url, "magnet:") {
+			fmt.Printf("url found is not a magnet link: %s", url)
+			return magnetUrl
+		}
+		magnetUrl = url
+
+	}
+	fmt.Println(magnetUrl)
+	return trimWhiteSpace(magnetUrl)
+}
+
+func ExtractTorrentFiles(row *goquery.Selection, files *[]string) {
+	cells := row.Find("td")
+	if cells.Length() > 0 {
+		filesDiv := cells.Eq(1).Find("#files").Find("ul").Find("li")
+
+		filesDiv.Each(func(i int, fileRow *goquery.Selection) {
+			file := fileRow.Text()
+			*files = append(*files, trimWhiteSpace(file))
+			fmt.Printf("File found: %s", file)
+		})
+	}
+
+}
+
+func getAdditionalInfo(url string) (AdditionalTorrentInfo, error) {
+	c := colly.NewCollector(colly.Debugger(&debug.LogDebugger{}))
+	var magnet string
+	var files []string
+
+	var err error
 	done := make(chan bool)
 
 	c.OnHTML("table.lista", func(e *colly.HTMLElement) {
+
+		// need this statement coz sometime this block gets executed multiple times if more than one table is found
+		if magnet != "" {
+			return
+		}
+
 		rows := e.DOM.Find("tr")
 		if rows.Length() == 0 {
-			magnetErr = fmt.Errorf("no rows found in the table")
+			err = fmt.Errorf("no rows found in the table")
 			done <- true
 			return
 		}
-		magnetLinkRow := rows.Eq(0)
-		magnetLinkRowCells := magnetLinkRow.Find("td")
+		rows.Each(func(_ int, row *goquery.Selection) {
+			// the first cell of each row have the title
+			title := row.Find("td").Eq(0).Text()
 
-		if magnetLinkRowCells.Length() > 0 {
-			secondCell := magnetLinkRowCells.Eq(1)
-			var exists bool
-			magnetUrl, exists = secondCell.Find("a").Attr("href")
-			if !exists {
-				magnetErr = fmt.Errorf("magnet link not found")
-
+			if strings.Contains(strings.ToLower(title), strings.ToLower("torrent")) {
+				magnet = ExtractTorrentMagnetUrl(row)
 			}
-		} else {
-			magnetErr = fmt.Errorf("no rows found in the table")
-		}
+
+			if strings.Contains(strings.ToLower(title), strings.ToLower("files")) {
+				ExtractTorrentFiles(row, &files)
+			}
+
+		})
 		done <- true
 	})
 
-	handleCollectorError(c, done, &magnetErr)
+	handleCollectorError(c, done, &err)
 
 	go func() {
-		err := c.Visit(url)
-		if err != nil {
-			magnetErr = err
+		_err := c.Visit(url)
+		if _err != nil {
+			err = _err
 		}
 		done <- true
 	}()
 
 	<-done
 
-	return magnetUrl, magnetErr
+	return AdditionalTorrentInfo{
+		Magnet: magnet,
+		Files:  files,
+	}, err
 }
 
 func handleCollectorError(c *colly.Collector, done chan bool, errPtr *error) {
@@ -174,7 +226,7 @@ func extractTorrentInfo(row *goquery.Selection, e *colly.HTMLElement, wg *sync.W
 		size = 0
 	}
 
-	magnetLink, err := getMagnetLink(absoluteURL)
+	additionalInfo, err := getAdditionalInfo(absoluteURL)
 	if err != nil {
 		log.Printf("Failed to get magnet link: %v url: %s", err, absoluteURL)
 	}
@@ -186,7 +238,8 @@ func extractTorrentInfo(row *goquery.Selection, e *colly.HTMLElement, wg *sync.W
 		Seeds:    parseInt(cells.Eq(5).Text()),
 		Leeches:  parseInt(cells.Eq(6).Text()),
 		Uploader: trimWhiteSpace(cells.Eq(7).Text()),
-		Link:     magnetLink,
+		Magnet:   additionalInfo.Magnet,
+		Files:    additionalInfo.Files,
 		Provider: "Rarbg",
 	}
 
@@ -266,6 +319,7 @@ func writeTorrentsToFile(filename string, torrents []Torrent) error {
 	defer file.Close()
 
 	encoder := json.NewEncoder(file)
+	encoder.SetEscapeHTML(false)
 	encoder.SetIndent("", "  ")
 	if err := encoder.Encode(torrents); err != nil {
 		return fmt.Errorf("failed to encode torrents to JSON: %v", err)
