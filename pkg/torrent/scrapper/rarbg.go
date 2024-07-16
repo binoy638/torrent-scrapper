@@ -1,86 +1,25 @@
-package main
+package scraper
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	t "github.com/binoy638/torrent-scrapper/pkg/torrent"
+
+	"github.com/binoy638/torrent-scrapper/utils"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly"
 	"github.com/gocolly/colly/debug"
 )
 
-type Torrent struct {
-	Name     string   `json:"name"`
-	Seeds    int      `json:"seeds"`
-	Leeches  int      `json:"leeches"`
-	Size     int64    `json:"size"`
-	Added    int64    `json:"added"`
-	Uploader string   `json:"uploader"`
-	Magnet   string   `json:"magnet"`
-	Files    []string `json:"files"`
-	Provider string   `json:"provider"`
-	Link     string   `json:"link"`
-}
-
 type AdditionalTorrentInfo struct {
 	Magnet string   `json:"magnet"`
 	Files  []string `json:"files"`
-}
-
-func parseSizeString(sizeStr string) (int64, error) {
-	sizeStr = strings.ToLower(sizeStr)
-	parts := strings.Fields(sizeStr)
-	if len(parts) != 2 {
-		return 0, fmt.Errorf("invalid size string format: %s", sizeStr)
-	}
-
-	size, err := strconv.ParseFloat(parts[0], 64)
-	if err != nil {
-		return 0, fmt.Errorf("failed to parse size: %v", err)
-	}
-
-	unit := parts[1]
-	var multiplier int64
-
-	switch unit {
-	case "gb":
-		multiplier = 1024 * 1024 * 1024
-	case "mb":
-		multiplier = 1024 * 1024
-	case "kb":
-		multiplier = 1024
-	default:
-		return 0, fmt.Errorf("unsupported size unit: %s", unit)
-	}
-
-	bytes := int64(size * float64(multiplier))
-	return bytes, nil
-}
-
-func parseInt(intStr string) int {
-	intStr = strings.TrimSpace(intStr)
-	intValue, err := strconv.Atoi(intStr)
-	if err != nil {
-		log.Printf("Unable to parse integer value: %s", intStr)
-		return 0
-	}
-	return intValue
-}
-
-func formatDate(dateStr string) (int64, error) {
-	layout := "2006-01-02 15:04:05"
-	dateTime, err := time.Parse(layout, dateStr)
-	if err != nil {
-		return 0, err
-	}
-	return dateTime.Unix(), nil
 }
 
 func ExtractTorrentMagnetUrl(row *goquery.Selection) string {
@@ -102,7 +41,7 @@ func ExtractTorrentMagnetUrl(row *goquery.Selection) string {
 
 	}
 	fmt.Println(magnetUrl)
-	return trimWhiteSpace(magnetUrl)
+	return utils.TrimWhiteSpace(magnetUrl)
 }
 
 func ExtractTorrentFiles(row *goquery.Selection, files *[]string) {
@@ -113,7 +52,7 @@ func ExtractTorrentFiles(row *goquery.Selection, files *[]string) {
 		filesDiv.Each(func(i int, fileRow *goquery.Selection) {
 			file := fileRow.Text()
 
-			*files = append(*files, strings.Replace(trimWhiteSpace(file), "[email protected]", " ", -1))
+			*files = append(*files, strings.Replace(utils.TrimWhiteSpace(file), "[email protected]", " ", -1))
 			fmt.Printf("File found: %s", file)
 		})
 	}
@@ -199,7 +138,7 @@ func handleCollectorError(c *colly.Collector, done chan bool, errPtr *error) {
 	})
 }
 
-func extractTorrentInfo(row *goquery.Selection, e *colly.HTMLElement, wg *sync.WaitGroup, mu *sync.Mutex, torrents *[]Torrent) {
+func extractTorrentInfo(row *goquery.Selection, e *colly.HTMLElement, wg *sync.WaitGroup, mu *sync.Mutex, torrents *[]t.Torrent) {
 	defer wg.Done()
 
 	cells := row.Find("td")
@@ -218,12 +157,12 @@ func extractTorrentInfo(row *goquery.Selection, e *colly.HTMLElement, wg *sync.W
 		absoluteURL = ""
 	}
 
-	added, err := formatDate(trimWhiteSpace(cells.Eq(3).Text()))
+	added, err := utils.FormatDate(utils.TrimWhiteSpace(cells.Eq(3).Text()))
 	if err != nil {
 		added = 0
 	}
 
-	size, err := parseSizeString(trimWhiteSpace(cells.Eq(4).Text()))
+	size, err := utils.ParseSizeString(utils.TrimWhiteSpace(cells.Eq(4).Text()))
 	if err != nil {
 		size = 0
 	}
@@ -233,13 +172,13 @@ func extractTorrentInfo(row *goquery.Selection, e *colly.HTMLElement, wg *sync.W
 		log.Printf("Failed to get magnet link: %v url: %s", err, absoluteURL)
 	}
 
-	torrent := Torrent{
-		Name:     trimWhiteSpace(name),
+	torrent := t.Torrent{
+		Name:     utils.TrimWhiteSpace(name),
 		Added:    added,
 		Size:     size,
-		Seeds:    parseInt(cells.Eq(5).Text()),
-		Leeches:  parseInt(cells.Eq(6).Text()),
-		Uploader: trimWhiteSpace(cells.Eq(7).Text()),
+		Seeds:    utils.ParseInt(cells.Eq(5).Text()),
+		Leeches:  utils.ParseInt(cells.Eq(6).Text()),
+		Uploader: utils.TrimWhiteSpace(cells.Eq(7).Text()),
 		Magnet:   additionalInfo.Magnet,
 		Files:    additionalInfo.Files,
 		Provider: "Rarbg",
@@ -253,40 +192,10 @@ func extractTorrentInfo(row *goquery.Selection, e *colly.HTMLElement, wg *sync.W
 	// fmt.Println("Added torrent:", torrent.Name)
 }
 
-const (
-	RARBG_URL  = "https://rargb.to"
-	I1337X_URL = "https://1337xx.to"
-	TPB_URL    = "https://apibay.org/q.php"
-	NYAA_URL   = "https://nyaa.si/?f=0&c=0_0"
-)
-
-func BuildCompleteUrl(site string, q string, sort_by string, sort_type string, page string, nsfw bool) string {
-	var url string
-	switch site {
-	case "rarbg":
-		url = RARBG_URL + "/search/" + page + "/?search=" + q + "&category[]=movies&category[]=tv&category[]=games&category[]=music&category[]=anime&category[]=apps&category[]=documentaries&category[]=other"
-
-		if nsfw {
-			url = RARBG_URL + "/search/" + page + "/?search=" + q
-		}
-
-		if sort_by != "" && sort_type != "" {
-			if sort_by == "time" {
-				sort_by = "data"
-			}
-			url = url + "&order=" + sort_by + "&by=" + sort_type
-		}
-	}
-	fmt.Println(url)
-	return url
-}
-
-func main() {
+func ScrapeRarbg(url string) []t.Torrent {
 	c := colly.NewCollector(colly.Debugger(&debug.LogDebugger{}))
 
-	startTime := time.Now()
-
-	var torrents []Torrent
+	var torrents []t.Torrent
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
@@ -307,30 +216,5 @@ func main() {
 
 	wg.Wait()
 
-	if err := writeTorrentsToFile("torrents.json", torrents); err != nil {
-		log.Fatalf("Failed to write torrents to file: %v", err)
-	}
-
-	fmt.Printf("Torrents data has been written to torrents.json in %v", time.Since(startTime))
-}
-
-func writeTorrentsToFile(filename string, torrents []Torrent) error {
-	file, err := os.Create(filename)
-	if err != nil {
-		return fmt.Errorf("failed to create file: %v", err)
-	}
-	defer file.Close()
-
-	encoder := json.NewEncoder(file)
-	encoder.SetEscapeHTML(false)
-	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(torrents); err != nil {
-		return fmt.Errorf("failed to encode torrents to JSON: %v", err)
-	}
-
-	return nil
-}
-
-func trimWhiteSpace(str string) string {
-	return strings.TrimSpace(str)
+	return torrents
 }
