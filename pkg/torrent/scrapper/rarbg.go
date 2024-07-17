@@ -192,7 +192,7 @@ func extractTorrentInfo(row *goquery.Selection, e *colly.HTMLElement, wg *sync.W
 	// fmt.Println("Added torrent:", torrent.Name)
 }
 
-func ScrapeRarbg(url string) []t.Torrent {
+func ScrapeRarbg(url string) ([]t.Torrent, error) {
 	c := colly.NewCollector(colly.Debugger(&debug.LogDebugger{}))
 
 	var torrents []t.Torrent
@@ -212,9 +212,10 @@ func ScrapeRarbg(url string) []t.Torrent {
 	err := c.Visit(BuildCompleteUrl("rarbg", "demon slayer", "seeders", "asc", "1", false))
 	if err != nil {
 		log.Fatalf("Failed to start visit: %v", err)
+		return torrents, err
 	}
 
 	wg.Wait()
 
-	return torrents
+	return torrents, nil
 }
