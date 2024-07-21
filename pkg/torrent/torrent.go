@@ -1,17 +1,17 @@
-package scraper
+package torrent
 
 import (
 	"errors"
 	"fmt"
 
-	t "github.com/binoy638/torrent-scrapper/pkg/torrent"
+	scrapper "github.com/binoy638/torrent-scrapper/pkg/torrent/scrapper"
 	"github.com/binoy638/torrent-scrapper/types"
 )
 
 func BuildCompleteUrl(site types.Site, q string, sortField types.SortField, sortOrder types.SortOrder, page string, nsfw bool) string {
 	var url string
 	switch site {
-	case types.RARBG_URL:
+	case types.RARBG:
 		url = string(types.RARBG_URL) + "/search/" + page + "/?search=" + q + "&category[]=movies&category[]=tv&category[]=games&category[]=music&category[]=anime&category[]=apps&category[]=documentaries&category[]=other"
 
 		if nsfw {
@@ -29,10 +29,10 @@ func BuildCompleteUrl(site types.Site, q string, sortField types.SortField, sort
 	return url
 }
 
-func ScrapeBySite(site types.Site, q string, sortField types.SortField, sortOrder types.SortOrder, page string, nsfw bool) ([]t.Torrent, error) {
+func ScrapeBySite(site types.Site, q string, sortField types.SortField, sortOrder types.SortOrder, page string, nsfw bool) ([]types.Torrent, error) {
 	switch site {
-	case "site1":
-		return ScrapeRarbg(BuildCompleteUrl(site, q, sortField, sortOrder, page, nsfw))
+	case types.RARBG:
+		return scrapper.ScrapeRarbg(BuildCompleteUrl(site, q, sortField, sortOrder, page, nsfw))
 	default:
 		return nil, errors.New("unknown site")
 	}

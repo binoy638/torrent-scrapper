@@ -1,6 +1,28 @@
 package types
 
+type Torrent struct {
+	Name     string   `json:"name"`
+	Seeds    int      `json:"seeds"`
+	Leeches  int      `json:"leeches"`
+	Size     int64    `json:"size"`
+	Added    int64    `json:"added"`
+	Uploader string   `json:"uploader"`
+	Magnet   string   `json:"magnet"`
+	Files    []string `json:"files"`
+	Provider string   `json:"provider"`
+	Link     string   `json:"link"`
+}
+
 type Site string
+
+const (
+	RARBG  Site = "rargb"
+	I1337X Site = "1337x"
+	TPB    Site = "tpb"
+	NYAA   Site = "nyaa"
+)
+
+type SiteUrl string
 
 const (
 	RARBG_URL  Site = "https://rargb.to"

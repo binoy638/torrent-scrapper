@@ -8,8 +8,7 @@ import (
 	"sync"
 	"time"
 
-	t "github.com/binoy638/torrent-scrapper/pkg/torrent"
-
+	"github.com/binoy638/torrent-scrapper/types"
 	"github.com/binoy638/torrent-scrapper/utils"
 
 	"github.com/PuerkitoBio/goquery"
@@ -65,7 +64,7 @@ func getAdditionalInfo(url string) (AdditionalTorrentInfo, error) {
 	var files []string
 
 	var err error
-	done := make(chan bool)
+	done := make(chan bool, 1) // Buffered channel to prevent deadlock
 
 	c.OnHTML("table.lista", func(e *colly.HTMLElement) {
 
@@ -115,7 +114,7 @@ func getAdditionalInfo(url string) (AdditionalTorrentInfo, error) {
 }
 
 func handleCollectorError(c *colly.Collector, done chan bool, errPtr *error) {
-	maxRetries := 10
+	maxRetries := 2
 	retryCount := 0
 
 	c.OnError(func(r *colly.Response, err error) {
@@ -123,7 +122,7 @@ func handleCollectorError(c *colly.Collector, done chan bool, errPtr *error) {
 		if r.StatusCode == http.StatusInternalServerError || r.StatusCode == http.StatusBadGateway || r.StatusCode == 0 {
 			if retryCount < maxRetries {
 				retryCount++
-				time.Sleep(2 * time.Second)
+				time.Sleep(1 * time.Second)
 				fmt.Printf("Retrying (%d/%d)...\n", retryCount, maxRetries)
 				r.Request.Retry()
 			} else {
@@ -138,7 +137,7 @@ func handleCollectorError(c *colly.Collector, done chan bool, errPtr *error) {
 	})
 }
 
-func extractTorrentInfo(row *goquery.Selection, e *colly.HTMLElement, wg *sync.WaitGroup, mu *sync.Mutex, torrents *[]t.Torrent) {
+func extractTorrentInfo(row *goquery.Selection, e *colly.HTMLElement, wg *sync.WaitGroup, mu *sync.Mutex, torrents *[]types.Torrent) {
 	defer wg.Done()
 
 	cells := row.Find("td")
@@ -172,7 +171,7 @@ func extractTorrentInfo(row *goquery.Selection, e *colly.HTMLElement, wg *sync.W
 		log.Printf("Failed to get magnet link: %v url: %s", err, absoluteURL)
 	}
 
-	torrent := t.Torrent{
+	torrent := types.Torrent{
 		Name:     utils.TrimWhiteSpace(name),
 		Added:    added,
 		Size:     size,
@@ -186,16 +185,15 @@ func extractTorrentInfo(row *goquery.Selection, e *colly.HTMLElement, wg *sync.W
 	}
 
 	mu.Lock()
+	defer mu.Unlock()
 	*torrents = append(*torrents, torrent)
-	mu.Unlock()
-
-	// fmt.Println("Added torrent:", torrent.Name)
 }
 
-func ScrapeRarbg(url string) ([]t.Torrent, error) {
+func ScrapeRarbg(url string) ([]types.Torrent, error) {
 	c := colly.NewCollector(colly.Debugger(&debug.LogDebugger{}))
-
-	var torrents []t.Torrent
+	done := make(chan bool, 1)
+	var err error
+	var torrents []types.Torrent
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
@@ -207,15 +205,15 @@ func ScrapeRarbg(url string) ([]t.Torrent, error) {
 		})
 	})
 
-	handleCollectorError(c, make(chan bool), new(error))
+	handleCollectorError(c, done, &err)
 
-	err := c.Visit(BuildCompleteUrl("rarbg", "demon slayer", "seeders", "asc", "1", false))
-	if err != nil {
-		log.Fatalf("Failed to start visit: %v", err)
-		return torrents, err
-	}
+	go func() {
+		err = c.Visit(url)
+		done <- true
+	}()
 
+	<-done
 	wg.Wait()
 
-	return torrents, nil
+	return torrents, err
 }
